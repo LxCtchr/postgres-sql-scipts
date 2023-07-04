@@ -77,3 +77,48 @@ from
 	temp_cte
 order by
 	 оличество_авторизаций desc
+	
+/*—егментаци€ пользователй в зависимости от того, насколько хорошо пользователи решают задачи*/
+select
+	user_id,
+	sum(1 - is_false) as count_correct,
+	count(*) as all_tries,
+	round(sum(1 - is_false)* 100.0 / count(*), 2) as winrate
+from
+	codesubmit c
+group by
+	user_id
+having
+	sum(1 - is_false) > 5
+order by
+	winrate desc
+	
+/*—егментаци€ пользователй в зависимости от того, насколько хорошо пользователи решают задачи + данные о количестве запусков кода дл€ каждого пользовател€*/
+with temp_cte2 as (
+select
+	user_id,
+	0 as is_correct,
+	problem_id
+from
+	coderun c
+union all
+select
+	user_id,
+	1 - is_false,
+	problem_id
+from
+	codesubmit cs 
+)
+select
+	user_id,
+	sum(is_correct) as count_correct,
+	count(*) as all_tries,
+	round(sum(is_correct)* 100.0 / count(*), 2) as winrate
+from
+	temp_cte2
+group by
+	user_id
+having
+	sum(is_correct) > 5
+order by
+	winrate desc
